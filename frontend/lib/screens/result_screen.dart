@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
 import '../core/api_client.dart';
 import '../core/theme.dart';
 import '../providers/providers.dart';
@@ -46,24 +47,33 @@ class ResultScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: NetworkPhoto(g.imageUrl, height: 260, width: double.infinity),
+                    borderRadius: BorderRadius.circular(8),
+                    child: NetworkPhoto(
+                      g.imageUrl,
+                      height: 260,
+                      width: double.infinity,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Center(child: GradeBadge(g.grade, large: true)),
                   if (g.gradeDescription != null) ...[
                     const SizedBox(height: 8),
-                    Text(g.gradeDescription!, textAlign: TextAlign.center),
+                    Text(
+                      (g.gradeDescription ?? ''),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                   const SizedBox(height: 20),
-                  Text('Confidence: ${g.confidence.toStringAsFixed(1)}%',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Classification confidence · ${g.confidence.toStringAsFixed(1)}%',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 6),
                   LinearProgressIndicator(
                     value: (g.confidence / 100).clamp(0.0, 1.0),
                     minHeight: 10,
                     color: color,
-                    backgroundColor: Colors.black12,
+                    backgroundColor: KopraPalette.leafTint,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   if (g.needsReview) ...[
@@ -71,34 +81,48 @@ class ResultScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3E0),
+                        color: KopraPalette.amberTint,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.warning_amber_rounded, color: Color(0xFFEF8F00)),
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: KopraPalette.amber,
+                          ),
                           SizedBox(width: 8),
-                          Expanded(child: Text('Low confidence: this result needs review. Try a clearer photo.')),
+                          Expanded(
+                            child: Text(
+                              'Low confidence: this result needs review. Try a clearer photo.',
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ],
                   const SizedBox(height: 20),
-                  Card(
+                  Padding(
+                    padding: EdgeInsets.zero,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Recommendation', style: Theme.of(context).textTheme.titleMedium),
+                          Text(
+                            'Recommendation',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                           const SizedBox(height: 8),
-                          Text(g.recommendation ?? 'No recommendation available.'),
+                          Text(
+                            g.recommendation ?? 'No recommendation available.',
+                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Card(
+                  Padding(
+                    padding: EdgeInsets.zero,
                     child: Column(
                       children: [
                         ListTile(
@@ -114,7 +138,10 @@ class ResultScreen extends ConsumerWidget {
                         ListTile(
                           leading: const Icon(Icons.schedule),
                           title: const Text('Graded on'),
-                          subtitle: Text(DateFormat('MMM d, y  h:mm a').format(g.classifiedAt)),
+                          subtitle: Text(
+                            DateFormat('MMM d, y  h:mm a')
+                                .format(g.classifiedAt),
+                          ),
                         ),
                       ],
                     ),
@@ -124,7 +151,7 @@ class ResultScreen extends ConsumerWidget {
                     FilledButton.icon(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.refresh),
-                      label: Text(againLabel!),
+                      label: Text((againLabel ?? '')),
                     ),
                   ],
                 ],

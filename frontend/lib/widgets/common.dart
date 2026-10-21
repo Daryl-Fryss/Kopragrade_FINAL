@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../core/theme.dart';
 
 /// Keeps content a readable width on big web screens, full width on phones.
@@ -36,7 +37,12 @@ class ErrorBanner extends StatelessWidget {
         children: [
           Icon(Icons.error_outline, color: scheme.onErrorContainer),
           const SizedBox(width: 8),
-          Expanded(child: Text(message, style: TextStyle(color: scheme.onErrorContainer))),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: scheme.onErrorContainer),
+            ),
+          ),
         ],
       ),
     );
@@ -52,15 +58,31 @@ class GradeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = gradeColor(grade);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: large ? 16 : 10, vertical: large ? 8 : 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: large ? 16 : 10,
+        vertical: large ? 8 : 4,
+      ),
       decoration: BoxDecoration(
         color: color.withAlpha(31),
         border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        grade,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: large ? 20 : 13),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(gradeIcon(grade), color: color, size: large ? 22 : 14),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              grade,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w700,
+                fontSize: large ? 20 : 11,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -68,7 +90,13 @@ class GradeBadge extends StatelessWidget {
 
 /// Small helper so every screen shows a photo the same way (with a fallback icon).
 class NetworkPhoto extends StatelessWidget {
-  const NetworkPhoto(this.url, {super.key, this.height, this.width, this.fit = BoxFit.cover});
+  const NetworkPhoto(
+    this.url, {
+    super.key,
+    this.height,
+    this.width,
+    this.fit = BoxFit.cover,
+  });
   final String url;
   final double? height;
   final double? width;
@@ -83,13 +111,140 @@ class NetworkPhoto extends StatelessWidget {
       fit: fit,
       loadingBuilder: (context, child, progress) => progress == null
           ? child
-          : SizedBox(height: height, width: width, child: const Center(child: CircularProgressIndicator())),
+          : SizedBox(
+              height: height,
+              width: width,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
       errorBuilder: (context, error, stack) => Container(
         height: height,
         width: width,
-        color: Colors.black12,
+        color: KopraPalette.leafTint,
         child: const Icon(Icons.broken_image_outlined),
       ),
     );
   }
+}
+
+/// Coconut cross-section drawn in Dart; no network or extra asset dependency.
+class CopraArtwork extends StatelessWidget {
+  const CopraArtwork({super.key, this.size = 132});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: size,
+    child: CustomPaint(painter: _CopraPainter()),
+  );
+}
+
+class _CopraPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 160, size.height / 160);
+    final leaf = Paint()..color = KopraPalette.leaf;
+    final leafPath = Path()
+      ..moveTo(72, 64)
+      ..quadraticBezierTo(67, 12, 137, 20)
+      ..quadraticBezierTo(122, 67, 72, 64)
+      ..close();
+    canvas.drawPath(leafPath, leaf);
+    canvas.drawLine(
+      const Offset(75, 61),
+      const Offset(123, 30),
+      Paint()
+        ..color = KopraPalette.leafTint
+        ..strokeWidth = 2,
+    );
+    canvas.drawCircle(
+      const Offset(30, 32),
+      13,
+      Paint()..color = KopraPalette.sunshine,
+    );
+    const outer = Rect.fromLTWH(24, 59, 116, 86);
+    canvas.drawOval(outer, Paint()..color = KopraPalette.shell);
+    canvas.drawOval(
+      const Rect.fromLTWH(29, 56, 106, 74),
+      Paint()..color = KopraPalette.flesh,
+    );
+    canvas.drawOval(
+      const Rect.fromLTWH(44, 69, 76, 43),
+      Paint()..color = KopraPalette.shell,
+    );
+    canvas.drawOval(
+      const Rect.fromLTWH(49, 72, 66, 35),
+      Paint()..color = KopraPalette.leafDark,
+    );
+    final fiber = Paint()
+      ..color = KopraPalette.flesh.withAlpha(100)
+      ..strokeWidth = 1.5;
+    for (var i = 0; i < 7; i++) {
+      final x = 43.0 + i * 12;
+      canvas.drawLine(Offset(x, 132), Offset(x + 3, 140), fiber);
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CopraPainter oldDelegate) => false;
+}
+
+class BrandHeader extends StatelessWidget {
+  const BrandHeader({super.key, this.compact = false});
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    if (compact) {
+      return const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CopraArtwork(size: 42),
+          SizedBox(width: 8),
+          Text('KopraGrade'),
+        ],
+      );
+    }
+    return Column(
+      children: [
+        const CopraArtwork(),
+        const SizedBox(height: 12),
+        Text('KopraGrade', style: Theme.of(context).textTheme.headlineLarge),
+        const SizedBox(height: 8),
+        Text(
+          'Copra drying quality classification',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: KopraPalette.muted),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+}
+
+class SectionHeading extends StatelessWidget {
+  const SectionHeading(this.title, {super.key, this.subtitle});
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.headlineMedium),
+        if (subtitle != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            subtitle ?? '',
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: KopraPalette.muted),
+          ),
+        ],
+      ],
+    ),
+  );
 }

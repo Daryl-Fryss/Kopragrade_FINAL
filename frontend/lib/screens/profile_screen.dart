@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/api_client.dart';
 import '../core/validators.dart';
 import '../providers/providers.dart';
@@ -36,14 +37,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _busy = true;
       _error = null;
       _message = null;
     });
     try {
-      await ref.read(authProvider.notifier).updateProfile(name: _name.text, contact: _contact.text);
+      await ref
+          .read(authProvider.notifier)
+          .updateProfile(name: _name.text, contact: _contact.text);
       if (mounted) setState(() => _message = 'Profile updated.');
     } catch (e) {
       if (mounted) setState(() => _error = ApiException.from(e).message);
@@ -58,7 +61,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Log out?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(minimumSize: const Size(88, 40)),
             onPressed: () => Navigator.pop(ctx, true),
@@ -79,7 +85,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Card(
+          SectionHeading(
+            user.name,
+            subtitle: user.isFarmer ? 'Farmer account' : 'Buyer account',
+          ),
+          const Divider(),
+          Padding(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
                 ListTile(
@@ -88,49 +100,74 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   subtitle: Text(user.email),
                 ),
                 ListTile(
-                  leading: Icon(user.isFarmer ? Icons.agriculture : Icons.storefront),
+                  leading: Icon(
+                    user.isFarmer ? Icons.agriculture : Icons.storefront,
+                  ),
                   title: const Text('Account type'),
                   subtitle: Text(user.isFarmer ? 'Farmer' : 'Buyer'),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          const SectionHeading('Personal details'),
           Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 12)],
+                if (_error != null) ...[
+                  ErrorBanner((_error ?? '')),
+                  const SizedBox(height: 12),
+                ],
                 if (_message != null) ...[
-                  Text(_message!, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                  Text(
+                    (_message ?? ''),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                 ],
                 TextFormField(
                   controller: _name,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
+                  decoration: const InputDecoration(
+                    labelText: 'Full name',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
                   validator: validateName,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _contact,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Contact info (optional)', prefixIcon: Icon(Icons.phone_outlined)),
+                  decoration: const InputDecoration(
+                    labelText: 'Contact info (optional)',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
                   validator: validateContact,
                 ),
                 const SizedBox(height: 20),
                 FilledButton(
                   onPressed: _busy ? null : _save,
                   child: _busy
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text('Save changes'),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          OutlinedButton.icon(onPressed: _logout, icon: const Icon(Icons.logout), label: const Text('Log out')),
+          OutlinedButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+            label: const Text('Log out'),
+          ),
         ],
       ),
     );

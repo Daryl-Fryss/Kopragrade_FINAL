@@ -1,9 +1,12 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../core/api_client.dart';
 import '../core/config.dart';
+import '../core/theme.dart';
 import '../core/platform_info.dart';
 import '../core/validators.dart';
 import '../providers/providers.dart';
@@ -31,7 +34,11 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     setState(() => _error = null);
     try {
       // On a phone this opens the gallery / file picker, on a PC the file chooser.
-      final file = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 90);
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        imageQuality: 90,
+      );
       if (file == null) return; // the user cancelled
       final bytes = await file.readAsBytes();
       final kind = detectImageKind(bytes);
@@ -40,7 +47,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
         return;
       }
       if (bytes.length > AppConfig.maxImageBytes) {
-        setState(() => _error = 'That photo is too large (max 5 MB). Please choose a smaller one.');
+        setState(
+          () => _error = 'That photo is too large (max 5 MB). Please choose a smaller one.',
+        );
         return;
       }
       setState(() {
@@ -54,14 +63,15 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
 
   void _openScanner() {
     setState(() => _error = null);
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ScanScreen()));
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const ScanScreen()));
   }
 
   void _clear() => setState(() {
-        _bytes = null;
-        _kind = null;
-        _error = null;
-      });
+    _bytes = null;
+    _kind = null;
+    _error = null;
+  });
 
   Future<void> _grade() async {
     final bytes = _bytes;
@@ -72,7 +82,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
       _error = null;
     });
     try {
-      final grading = await ref.read(gradingServiceProvider).upload(bytes, kind);
+      final grading = await ref
+          .read(gradingServiceProvider)
+          .upload(bytes, kind);
       if (!mounted) return;
       setState(() {
         _bytes = null;
@@ -80,7 +92,10 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
       });
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => ResultScreen(gradingId: grading.id, againLabel: 'Upload Another Photo'),
+          builder: (_) => ResultScreen(
+            gradingId: grading.id,
+            againLabel: 'Upload Another Photo',
+          ),
         ),
       );
     } catch (e) {
@@ -97,40 +112,50 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     final hasPhoto = _bytes != null;
     return ResponsiveBody(
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         children: [
-          Text(
-            phone ? 'Ready to Grade Copra?' : 'Upload a Copra Photo',
-            style: Theme.of(context).textTheme.titleLarge,
+          SectionHeading(
+            'Grade your copra',
+            subtitle: phone
+                ? 'Scan a sample or choose a photo.'
+                : 'Choose a photo of your copra sample.',
           ),
-          const SizedBox(height: 4),
-          Text(phone
-              ? 'Scan a copra sample with your camera, or upload a photo. Good daylight gives the best result.'
-              : 'Choose a clear photo of the dried copra, taken in good daylight.'),
-          const SizedBox(height: 16),
-          if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 16)],
+          if (_error != null) ...[
+            ErrorBanner((_error ?? '')),
+            const SizedBox(height: 16),
+          ],
           AspectRatio(
             aspectRatio: 4 / 3,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: KopraPalette.leafTint,
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: scheme.outlineVariant),
               ),
               clipBehavior: Clip.antiAlias,
               child: !hasPhoto
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.photo_camera_outlined, size: 56, color: scheme.outline),
-                        const SizedBox(height: 8),
-                        const Text('No photo selected yet'),
-                      ],
+                  ? LayoutBuilder(
+                      builder: (context, constraints) => Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CopraArtwork(size: constraints.maxHeight * 0.42),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Your next sample',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'JPG or PNG · Up to 5 MB',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
                     )
-                  : Image.memory(_bytes!, fit: BoxFit.cover),
+                  : Image.memory(_bytes ?? Uint8List(0), fit: BoxFit.cover),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           if (!hasPhoto) ...[
             // The scanner button only exists on phones. On a PC/laptop it is not built at all.
             if (phone) ...[
@@ -157,7 +182,11 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
             FilledButton.icon(
               onPressed: _busy ? null : _grade,
               icon: _busy
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.analytics_outlined),
               label: Text(_busy ? 'Grading...' : 'Grade this copra'),
             ),
@@ -168,6 +197,22 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
               label: const Text('Choose a different photo'),
             ),
           ],
+          const SizedBox(height: 28),
+          const Divider(),
+          Text(
+            'Drying quality',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          const Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              GradeBadge('Well-Dried'),
+              GradeBadge('Moderately Dried'),
+              GradeBadge('Poorly Dried'),
+            ],
+          ),
         ],
       ),
     );

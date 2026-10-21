@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/api_client.dart';
 import '../core/validators.dart';
 import '../providers/providers.dart';
@@ -29,7 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _busy = true;
       _error = null;
@@ -46,7 +47,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: SafeArea(
         child: ResponsiveBody(
@@ -59,21 +59,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 32),
-                  Icon(Icons.grass, size: 72, color: scheme.primary),
-                  const SizedBox(height: 8),
-                  Text('KopraGrade',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  const Text('Copra drying-quality grading', textAlign: TextAlign.center),
-                  const SizedBox(height: 32),
-                  if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 16)],
+                  const BrandHeader(),
+                  const SectionHeading(
+                    'Welcome back',
+                    subtitle: 'Sign in to your account.',
+                  ),
+                  if (_error != null) ...[
+                    ErrorBanner((_error ?? '')),
+                    const SizedBox(height: 16),
+                  ],
                   TextFormField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
                     validator: validateEmail,
                   ),
                   const SizedBox(height: 16),
@@ -86,24 +88,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       labelText: 'Password',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(_hide ? Icons.visibility : Icons.visibility_off),
+                        tooltip: _hide ? 'Show password' : 'Hide password',
+                        icon: Icon(
+                          _hide ? Icons.visibility : Icons.visibility_off,
+                        ),
                         onPressed: () => setState(() => _hide = !_hide),
                       ),
                     ),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Please enter your password.' : null,
+                    validator: (v) => (v == null || v.isEmpty)
+                        ? 'Please enter your password.'
+                        : null,
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: _busy ? null : _submit,
                     child: _busy
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Log in'),
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Sign in'),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: _busy
                         ? null
-                        : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                        : () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterScreen(),
+                            ),
+                          ),
                     child: const Text('Create an account'),
                   ),
                 ],

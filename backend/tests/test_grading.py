@@ -250,7 +250,14 @@ def tiny_model_files(tmp_path_factory):
     x = tf.keras.layers.Rescaling(1 / 127.5, offset=-1)(inputs)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     outputs = tf.keras.layers.Dense(3, activation="softmax")(x)
-    tf.keras.Model(inputs, outputs).save(folder / "m.keras")
+    model = tf.keras.Model(inputs, outputs)
+    # Random weights give about 37% confidence, which REJECT_BELOW_CONFIDENCE (50) turns into a
+    # 422, so this fixture would fail end to end. Zero the weights and bias the first class so the
+    # tiny model answers confidently and reproducibly for any input.
+    model.layers[-1].set_weights(
+        [np.zeros((3, 3), dtype="float32"), np.array([8.0, 0.0, 0.0], dtype="float32")]
+    )
+    model.save(folder / "m.keras")
     (folder / "names.json").write_text(json.dumps(["Well-Dried", "Moderately Dried", "Poorly Dried"]))
     return folder / "m.keras", folder / "names.json"
 

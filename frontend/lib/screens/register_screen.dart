@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/api_client.dart';
 import '../core/validators.dart';
 import '../providers/providers.dart';
@@ -33,13 +34,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await ref.read(authProvider.notifier).register(
+      await ref
+          .read(authProvider.notifier)
+          .register(
             name: _name.text,
             email: _email.text,
             password: _password.text,
@@ -68,13 +71,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 16)],
-                  const Text('I am a...', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SectionHeading(
+                    'Join KopraGrade',
+                    subtitle: 'Create your farmer or buyer account.',
+                  ),
+                  if (_error != null) ...[
+                    ErrorBanner((_error ?? '')),
+                    const SizedBox(height: 16),
+                  ],
+                  const Text(
+                    'Account type',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   SegmentedButton<String>(
                     segments: const [
-                      ButtonSegment(value: 'farmer', label: Text('Farmer'), icon: Icon(Icons.agriculture)),
-                      ButtonSegment(value: 'buyer', label: Text('Buyer'), icon: Icon(Icons.storefront)),
+                      ButtonSegment(
+                        value: 'farmer',
+                        label: Text('Farmer'),
+                        icon: Icon(Icons.agriculture),
+                      ),
+                      ButtonSegment(
+                        value: 'buyer',
+                        label: Text('Buyer'),
+                        icon: Icon(Icons.storefront),
+                      ),
                     ],
                     selected: {_role},
                     onSelectionChanged: (s) => setState(() => _role = s.first),
@@ -83,14 +104,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   TextFormField(
                     controller: _name,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
+                    decoration: const InputDecoration(
+                      labelText: 'Full name',
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
                     validator: validateName,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
                     validator: validateEmail,
                   ),
                   const SizedBox(height: 16),
@@ -101,7 +128,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       labelText: 'Password (at least 8 characters)',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(_hide ? Icons.visibility : Icons.visibility_off),
+                        tooltip: _hide ? 'Show password' : 'Hide password',
+                        icon: Icon(
+                          _hide ? Icons.visibility : Icons.visibility_off,
+                        ),
                         onPressed: () => setState(() => _hide = !_hide),
                       ),
                     ),
@@ -111,14 +141,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   TextFormField(
                     controller: _confirm,
                     obscureText: _hide,
-                    decoration: const InputDecoration(labelText: 'Confirm password', prefixIcon: Icon(Icons.lock_outline)),
-                    validator: (v) => v != _password.text ? 'Passwords do not match.' : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm password',
+                      prefixIcon: Icon(Icons.lock_outline),
+                    ),
+                    validator: (v) =>
+                        v != _password.text ? 'Passwords do not match.' : null,
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: _busy ? null : _submit,
                     child: _busy
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Sign up'),
                   ),
                 ],

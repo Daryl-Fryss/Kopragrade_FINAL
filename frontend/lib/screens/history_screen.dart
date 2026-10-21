@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
 import '../core/config.dart';
+import '../core/theme.dart';
 import '../models/grading.dart';
 import '../providers/history_controller.dart';
 import '../providers/providers.dart';
@@ -12,7 +14,11 @@ import 'result_screen.dart';
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
-  Future<void> _pickRange(BuildContext context, WidgetRef ref, HistoryState s) async {
+  Future<void> _pickRange(
+    BuildContext context,
+    WidgetRef ref,
+    HistoryState s,
+  ) async {
     final now = DateTime.now();
     final picked = await showDateRangePicker(
       context: context,
@@ -34,6 +40,15 @@ class HistoryScreen extends ConsumerWidget {
       child: Column(
         children: [
           Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SectionHeading(
+                isBuyer ? 'Copra gradings' : 'Your grading history',
+              ),
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Wrap(
               spacing: 8,
@@ -45,19 +60,30 @@ class HistoryScreen extends ConsumerWidget {
                   hint: const Text('All grades'),
                   onChanged: controller.setGrade,
                   items: [
-                    const DropdownMenuItem<String?>(value: null, child: Text('All grades')),
-                    ...AppConfig.grades.map((g) => DropdownMenuItem<String?>(value: g, child: Text(g))),
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('All grades'),
+                    ),
+                    ...AppConfig.grades.map(
+                      (g) =>
+                          DropdownMenuItem<String?>(value: g, child: Text(g)),
+                    ),
                   ],
                 ),
                 OutlinedButton.icon(
                   onPressed: () => _pickRange(context, ref, state),
                   icon: const Icon(Icons.date_range, size: 18),
-                  label: Text(state.range == null
-                      ? 'Any date'
-                      : '${day.format(state.range!.start)} - ${day.format(state.range!.end)}'),
+                  label: Text(
+                    state.range == null
+                        ? 'Any date'
+                        : '${day.format((state.range?.start ?? DateTime.now()))} - ${day.format((state.range?.end ?? DateTime.now()))}',
+                  ),
                 ),
                 if (state.hasFilters)
-                  TextButton(onPressed: controller.clearFilters, child: const Text('Clear filters')),
+                  TextButton(
+                    onPressed: controller.clearFilters,
+                    child: const Text('Clear filters'),
+                  ),
               ],
             ),
           ),
@@ -67,7 +93,12 @@ class HistoryScreen extends ConsumerWidget {
     );
   }
 
-  Widget _body(BuildContext context, HistoryState state, HistoryController controller, bool isBuyer) {
+  Widget _body(
+    BuildContext context,
+    HistoryState state,
+    HistoryController controller,
+    bool isBuyer,
+  ) {
     if (state.loading && state.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -78,9 +109,12 @@ class HistoryScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ErrorBanner(state.error!),
+              ErrorBanner((state.error ?? '')),
               const SizedBox(height: 16),
-              OutlinedButton(onPressed: controller.refresh, child: const Text('Try again')),
+              OutlinedButton(
+                onPressed: controller.refresh,
+                child: const Text('Try again'),
+              ),
             ],
           ),
         ),
@@ -91,7 +125,9 @@ class HistoryScreen extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            state.hasFilters ? 'No results match these filters.' : 'No gradings yet.',
+            state.hasFilters
+                ? 'No results match these filters.'
+                : 'No gradings yet.',
             textAlign: TextAlign.center,
           ),
         ),
@@ -109,7 +145,10 @@ class HistoryScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: state.loadingMore
                   ? const Center(child: CircularProgressIndicator())
-                  : OutlinedButton(onPressed: controller.loadMore, child: const Text('Load more')),
+                  : OutlinedButton(
+                      onPressed: controller.loadMore,
+                      child: const Text('Load more'),
+                    ),
             );
           }
           return _HistoryTile(state.items[i], showFarmer: isBuyer);
@@ -127,10 +166,18 @@ class _HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: KopraPalette.paper,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: KopraPalette.line),
+      ),
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ResultScreen(gradingId: g.id))),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => ResultScreen(gradingId: g.id)),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Row(
@@ -144,16 +191,26 @@ class _HistoryTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(g.sampleCode, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(
+                      g.sampleCode,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 4,
+                      runSpacing: 6,
                       children: [
                         GradeBadge(g.grade),
                         const SizedBox(width: 8),
                         Text('${g.confidence.toStringAsFixed(0)}%'),
                         if (g.needsReview) ...[
                           const SizedBox(width: 6),
-                          const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFEF8F00)),
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            size: 18,
+                            color: KopraPalette.amber,
+                          ),
                         ],
                       ],
                     ),

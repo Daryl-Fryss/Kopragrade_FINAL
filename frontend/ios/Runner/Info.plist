@@ -26,6 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>KopraGrade uses the camera to take a photo of dried copra for grading.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>KopraGrade lets you pick a copra photo from your library to grade.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>KopraGrade may save grading photos to your photo library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

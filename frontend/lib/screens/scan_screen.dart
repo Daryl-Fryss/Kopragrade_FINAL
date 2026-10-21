@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/api_client.dart';
 import '../core/config.dart';
+import '../core/theme.dart';
 import '../core/frame_steadiness.dart';
 import '../core/validators.dart';
 import '../providers/providers.dart';
@@ -26,7 +29,8 @@ class ScanScreen extends ConsumerStatefulWidget {
   ConsumerState<ScanScreen> createState() => _ScanScreenState();
 }
 
-class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObserver {
+class _ScanScreenState extends ConsumerState<ScanScreen>
+    with WidgetsBindingObserver {
   static const _sampleEvery = Duration(milliseconds: 250);
 
   final _detector = SteadinessDetector();
@@ -38,10 +42,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
   int _epoch = 0;
   Future<void>? _startFuture;
 
-  bool _resultOpen = false; // the result screen is on top, so the camera must stay off
-  bool _requestInFlight = false; // one photo at a time: this is what stops duplicate scans
-  bool _autoAvailable = false; // automatic detection works on this device/browser
-  bool _autoPaused = false; // paused after a server problem; Capture still works
+  bool _resultOpen =
+      false; // the result screen is on top, so the camera must stay off
+  bool _requestInFlight =
+      false; // one photo at a time: this is what stops duplicate scans
+  bool _autoAvailable =
+      false; // automatic detection works on this device/browser
+  bool _autoPaused =
+      false; // paused after a server problem; Capture still works
   DateTime _lastSample = DateTime.fromMillisecondsSinceEpoch(0);
   SteadyReading _reading = const SteadyReading.idle();
 
@@ -53,13 +61,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_startCamera()));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => unawaited(_startCamera()),
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    unawaited(_releaseCamera(rebuild: false)); // leaving the screen frees the camera
+    unawaited(
+      _releaseCamera(rebuild: false),
+    ); // leaving the screen frees the camera
     super.dispose();
   }
 
@@ -67,10 +79,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Also covers coming back from the phone's Settings after allowing the camera.
-      if (!_resultOpen && !_requestInFlight && _controller == null) unawaited(_startCamera());
+      if (!_resultOpen && !_requestInFlight && _controller == null) {
+        unawaited(_startCamera());
+      }
     } else {
       // inactive / paused / hidden: do not keep the camera running in the background
-      if (_controller != null) unawaited(_releaseCamera());
+      if (_controller != null) {
+        unawaited(_releaseCamera());
+      }
     }
   }
 
@@ -82,7 +98,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     final done = Completer<void>();
     _startFuture = done.future;
     try {
-      if (previous != null) await previous; // never start two cameras at the same time
+      if (previous != null) {
+        await previous; // never start two cameras at the same time
+      }
       if (!mounted || epoch != _epoch) return;
       await _openCamera(epoch, banner, pauseAuto);
     } finally {
@@ -105,7 +123,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
       final cameras = await availableCameras();
       if (!mounted || epoch != _epoch) return;
       if (cameras.isEmpty) {
-        _block('No camera was found on this device. You can upload a photo instead.', canRetry: false);
+        _block(
+          'No camera was found on this device. You can upload a photo instead.',
+          canRetry: false,
+        );
         return;
       }
       final camera = cameras.firstWhere(
@@ -116,8 +137,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
         camera,
         ResolutionPreset.high,
         enableAudio: false,
-        imageFormatGroup:
-            defaultTargetPlatform == TargetPlatform.iOS ? ImageFormatGroup.bgra8888 : ImageFormatGroup.yuv420,
+        imageFormatGroup: defaultTargetPlatform == TargetPlatform.iOS
+            ? ImageFormatGroup.bgra8888
+            : ImageFormatGroup.yuv420,
       );
       await controller.initialize();
       if (!mounted || epoch != _epoch) {
@@ -137,7 +159,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     } catch (_) {
       await _disposeQuietly(controller);
       if (mounted && epoch == _epoch) {
-        _block('The camera could not be started. Please try again, or upload a photo instead.');
+        _block(
+          'The camera could not be started. Please try again, or upload a photo instead.',
+        );
       }
     }
   }
@@ -158,7 +182,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
   Future<void> _disposeQuietly(CameraController? controller) async {
     if (controller == null) return;
     try {
-      if (controller.value.isStreamingImages) await controller.stopImageStream();
+      if (controller.value.isStreamingImages) {
+        await controller.stopImageStream();
+      }
     } catch (_) {}
     try {
       await controller.dispose();
@@ -177,16 +203,25 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     final code = e.code.toLowerCase();
     if (code.contains('withoutprompt')) {
       return (
-        message: 'Camera access is turned off for KopraGrade. Turn it on in your phone settings, '
+        message:
+            'Camera access is turned off for KopraGrade. Turn it on in your phone settings, '
             'or upload a photo instead.',
         canRetry: true,
       );
     }
     if (code.contains('restricted')) {
-      return (message: 'Camera access is restricted on this device. You can upload a photo instead.', canRetry: false);
+      return (
+        message: 'Camera access is restricted on this device. You can upload a photo instead.',
+        canRetry: false,
+      );
     }
-    if (code.contains('denied') || code.contains('permission') || code.contains('notallowed')) {
-      return (message: 'Camera permission is required for scanning. You can also upload a photo instead.', canRetry: true);
+    if (code.contains('denied') ||
+        code.contains('permission') ||
+        code.contains('notallowed')) {
+      return (
+        message: 'Camera permission is required for scanning. You can also upload a photo instead.',
+        canRetry: true,
+      );
     }
     if (code.contains('notreadable') || code.contains('inuse')) {
       return (
@@ -195,7 +230,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
       );
     }
     if (code.contains('notfound') || code.contains('nocamera')) {
-      return (message: 'No camera was found on this device. You can upload a photo instead.', canRetry: false);
+      return (
+        message: 'No camera was found on this device. You can upload a photo instead.',
+        canRetry: false,
+      );
     }
     if (code.contains('security')) {
       return (
@@ -213,18 +251,28 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
 
   Future<void> _startStream() async {
     final controller = _controller;
-    if (controller == null || !controller.value.isInitialized || controller.value.isStreamingImages) return;
-    if (kIsWeb) return; // browsers cannot stream frames here: use the Capture button
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        controller.value.isStreamingImages) {
+      return;
+    }
+    if (kIsWeb) {
+      return; // browsers cannot stream frames here: use the Capture button
+    }
     try {
       await controller.startImageStream(_onFrame);
-      if (mounted && identical(controller, _controller)) setState(() => _autoAvailable = true);
+      if (mounted && identical(controller, _controller)) {
+        setState(() => _autoAvailable = true);
+      }
     } catch (_) {
       if (mounted) setState(() => _autoAvailable = false);
     }
   }
 
   void _onFrame(CameraImage image) {
-    if (!mounted || _phase != _Phase.ready || _autoPaused || _requestInFlight) return;
+    if (!mounted || _phase != _Phase.ready || _autoPaused || _requestInFlight) {
+      return;
+    }
     final now = DateTime.now();
     if (now.difference(_lastSample) < _sampleEvery) return;
     _lastSample = now;
@@ -237,7 +285,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
       height: image.height,
       bytesPerRow: plane.bytesPerRow,
       bytesPerPixel: plane.bytesPerPixel ?? (isBgra ? 4 : 1),
-      channelOffset: isBgra ? 1 : 0, // green channel is close enough to brightness
+      channelOffset: isBgra
+          ? 1
+          : 0, // green channel is close enough to brightness
     );
     if (samples == null) return;
 
@@ -251,7 +301,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
   Future<void> _capture() async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) return;
-    if (_phase != _Phase.ready || _requestInFlight) return; // already busy: ignore
+    if (_phase != _Phase.ready || _requestInFlight) {
+      return; // already busy: ignore
+    }
     _requestInFlight = true;
     _detector.reset();
     setState(() {
@@ -262,12 +314,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
 
     Uint8List bytes;
     try {
-      if (controller.value.isStreamingImages) await controller.stopImageStream();
+      if (controller.value.isStreamingImages) {
+        await controller.stopImageStream();
+      }
       final file = await controller.takePicture();
       bytes = await file.readAsBytes();
     } catch (_) {
       _requestInFlight = false;
-      await _backToReady('Could not take the photo. Please try again.', pauseAuto: false);
+      await _backToReady(
+        'Could not take the photo. Please try again.',
+        pauseAuto: false,
+      );
       return;
     }
     await _grade(bytes);
@@ -277,12 +334,18 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     final kind = detectImageKind(bytes);
     if (kind == null) {
       _requestInFlight = false;
-      await _backToReady('Unable to process this image. Please try again.', pauseAuto: false);
+      await _backToReady(
+        'Unable to process this image. Please try again.',
+        pauseAuto: false,
+      );
       return;
     }
     if (bytes.length > AppConfig.maxImageBytes) {
       _requestInFlight = false;
-      await _backToReady('The photo is too large (max 5 MB). Try Upload Photo instead.', pauseAuto: true);
+      await _backToReady(
+        'The photo is too large (max 5 MB). Try Upload Photo instead.',
+        pauseAuto: true,
+      );
       return;
     }
     if (mounted) setState(() => _phase = _Phase.grading);
@@ -291,7 +354,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     int? gradingId;
     ApiException? failure;
     try {
-      final grading = await ref.read(gradingServiceProvider).upload(bytes, kind);
+      final grading = await ref
+          .read(gradingServiceProvider)
+          .upload(bytes, kind);
       gradingId = grading.id;
     } catch (e) {
       failure = ApiException.from(e);
@@ -306,7 +371,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     // 422 = "no copra detected / unreadable photo": nothing was saved, just look again after the
     // camera moves. Any other problem (server, model, network) pauses auto-scan so we do not keep retrying.
     final soft = failure?.statusCode == 422;
-    await _backToReady(failure?.message ?? 'Something went wrong. Please try again.', pauseAuto: !soft);
+    await _backToReady(
+      failure?.message ?? 'Something went wrong. Please try again.',
+      pauseAuto: !soft,
+    );
   }
 
   Future<void> _backToReady(String message, {required bool pauseAuto}) async {
@@ -333,7 +401,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     }
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ResultScreen(gradingId: gradingId, againLabel: 'Scan Again'),
+        builder: (_) =>
+            ResultScreen(gradingId: gradingId, againLabel: 'Scan Again'),
       ),
     );
     _resultOpen = false;
@@ -349,13 +418,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
       _Phase.capturing => 'Capturing...',
       _Phase.grading => 'Grading...',
       _Phase.blocked => '',
-      _Phase.ready => !_autoAvailable
-          ? 'Tap Capture when the copra is inside the frame.'
-          : _autoPaused
-              ? 'Auto-scan is paused. Tap Capture to try again.'
-              : _reading.progress > 0
-                  ? 'Hold steady...'
-                  : 'Hold the camera steady over the copra, or tap Capture.',
+      _Phase.ready =>
+        !_autoAvailable
+            ? 'Tap Capture when the copra is inside the frame.'
+            : _autoPaused
+            ? 'Auto-scan is paused. Tap Capture to try again.'
+            : _reading.progress > 0
+            ? 'Hold steady...'
+            : 'Hold the camera steady over the copra, or tap Capture.',
     };
   }
 
@@ -365,10 +435,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
     return PopScope(
       canPop: !busy, // do not walk away in the middle of a grading request
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: KopraPalette.scanBackground,
         appBar: AppBar(title: const Text('Scan Copra')),
         body: SafeArea(
-          child: _phase == _Phase.blocked ? _buildBlocked(context) : _buildScanner(context, busy),
+          child: _phase == _Phase.blocked
+              ? _buildBlocked(context)
+              : _buildScanner(context, busy),
         ),
       ),
     );
@@ -384,16 +456,24 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.no_photography_outlined, size: 64, color: Theme.of(context).colorScheme.outline),
+              Icon(
+                Icons.no_photography_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.outline,
+              ),
               const SizedBox(height: 16),
               Text(_blockedMessage, textAlign: TextAlign.center),
               const SizedBox(height: 24),
               if (_canRetry) ...[
-                FilledButton(onPressed: () => unawaited(_startCamera()), child: const Text('Try again')),
+                FilledButton(
+                  onPressed: () => unawaited(_startCamera()),
+                  child: const Text('Try again'),
+                ),
                 const SizedBox(height: 12),
               ],
               OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(), // back to the screen that has Upload Photo
+                onPressed: () => Navigator.of(context)
+                    .pop(), // back to the screen that has Upload Photo
                 child: const Text('Upload a photo instead'),
               ),
             ],
@@ -424,7 +504,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
               child: CustomPaint(
                 painter: _FramePainter(
                   frame: frame,
-                  color: _reading.progress > 0 ? Colors.greenAccent : Colors.white,
+                  color: _reading.progress > 0
+                      ? KopraPalette.scanHighlight
+                      : KopraPalette.paper,
                 ),
               ),
             ),
@@ -433,12 +515,18 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
               left: 16,
               right: 16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: KopraPalette.scanScrim,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: const Text(
                   'Place one copra sample inside the frame.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(color: KopraPalette.paper, fontSize: 16),
                 ),
               ),
             ),
@@ -449,19 +537,27 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (_banner != null) ...[ErrorBanner(_banner!), const SizedBox(height: 12)],
+                  if (_banner != null) ...[
+                    ErrorBanner((_banner ?? '')),
+                    const SizedBox(height: 12),
+                  ],
                   Text(
                     _statusText(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    style: const TextStyle(
+                      color: KopraPalette.paper,
+                      fontSize: 15,
+                    ),
                   ),
-                  if (_autoAvailable && !_autoPaused && _reading.progress > 0) ...[
+                  if (_autoAvailable &&
+                      !_autoPaused &&
+                      _reading.progress > 0) ...[
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
                       value: _reading.progress,
                       minHeight: 6,
-                      color: Colors.greenAccent,
-                      backgroundColor: Colors.white24,
+                      color: KopraPalette.scanHighlight,
+                      backgroundColor: KopraPalette.line.withAlpha(60),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ],
@@ -476,8 +572,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> with WidgetsBindingObse
             ),
             if (busy)
               const ColoredBox(
-                color: Colors.black54,
-                child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                color: KopraPalette.scanScrim,
+                child: Center(
+                  child: CircularProgressIndicator(color: KopraPalette.paper),
+                ),
               ),
           ],
         );
@@ -527,7 +625,7 @@ class _FramePainter extends CustomPainter {
       Path()..addRect(Offset.zero & size),
       Path()..addRRect(hole),
     );
-    canvas.drawPath(dimmed, Paint()..color = const Color(0x88000000));
+    canvas.drawPath(dimmed, Paint()..color = KopraPalette.scanScrim);
 
     final pen = Paint()
       ..color = color
@@ -558,5 +656,6 @@ class _FramePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_FramePainter old) => old.frame != frame || old.color != color;
+  bool shouldRepaint(_FramePainter old) =>
+      old.frame != frame || old.color != color;
 }
