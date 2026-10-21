@@ -48,8 +48,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _password.text,
             role: _role,
           );
-      // registered and logged in: close this screen so the home screen shows
+      // Account created: go back to the sign-in screen and tell the user what to do next.
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      AppNotification.success(
+        'You are registered! Sign in with your email and password to continue.',
+      );
     } catch (e) {
       if (mounted) setState(() => _error = ApiException.from(e).message);
     } finally {

@@ -179,7 +179,9 @@ flutter run -d chrome
 
 ## Step 6: Try it
 
-1. Create a **Farmer** account and log in.
+1. Create a **Farmer** account. After the sign-up succeeds the app shows the notification
+   **"You are registered!"** and goes back to the sign-in screen, where you log in with the new
+   email and password.
 2. On the **Grade** tab choose a photo (JPG or PNG, max 5 MB) and press **Grade this copra**.
 3. You see the grade, confidence and recommendation. The **History** tab lists your gradings.
 4. Create a **Buyer** account (use another email). Buyers see everyone's gradings but cannot grade.
@@ -232,6 +234,13 @@ Send `Authorization: Bearer <token>` on everything except register, login and he
 | GET | `/api/users/me` | logged in | current profile |
 | PUT | `/api/users/me` | logged in | update `name`, `contact` |
 | GET | `/api/health` | anyone | server and model check |
+| GET | `/` | anyone | a small start page, so opening the server address is not a 404 (HTML) |
+| GET | `/api` | anyone | the list of the API addresses above |
+| GET | `/health`, `/healthz` | anyone | the same answer as `/api/health` (the names health checkers use) |
+
+Everything is JSON except the photo upload and the start page at `/`.
+Two more addresses are only there so no tool logs a 404: `/favicon.ico` (the icon the browser
+asks for) and `/v1/models`, which answers an empty model list because this server is not an LLM.
 
 Status codes: 400 invalid input, 401 not logged in, 403 wrong role or someone else's grading, 404 not found,
 409 email already used, 413 image too large, 415 not a real JPG/PNG, 422 unreadable image,
@@ -284,6 +293,8 @@ The SQL is in `database/schema.sql`.
 | Flutter: "Cannot reach the server" | Is `uvicorn` running? Android emulator must use `10.0.2.2`; a phone needs your PC IP (Step 5). |
 | Photos do not show in the app | Open the `image_url` from the result in a browser (`http://localhost:8000/images/<file>`) to check the API serves it. |
 | Everything is graded with low confidence | You are using the demo model. Train a real one (Step 3B). |
+| A `404` (or any error) keeps appearing in the terminal | Open `logs/errors.log` (project folder): every failed request is written there with the address, who asked for it and when. |
+| TensorFlow warnings fill the terminal on start-up | They are switched off on purpose in `backend/app/services/classifier.py` (`TF_CPP_MIN_LOG_LEVEL`, `TF_ENABLE_ONEDNN_OPTS`); only real errors are printed. |
 
 ## Decisions to review with your instructor
 

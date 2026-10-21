@@ -49,6 +49,84 @@ class ErrorBanner extends StatelessWidget {
   }
 }
 
+/// One messenger for the whole app, so a notification can be shown even right after a
+/// screen was closed (for example "you are registered" on the way back to the sign-in screen).
+final GlobalKey<ScaffoldMessengerState> appMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+/// The kinds of short notifications (SnackBars) the app shows.
+enum NotificationKind { success, info, warning, error }
+
+/// Shows a short notification anywhere in the app, without needing a BuildContext.
+///
+///     AppNotification.success('You are registered!');
+///     AppNotification.warning('Your session has expired. Please sign in again.');
+class AppNotification {
+  const AppNotification._();
+
+  static void show(
+    String message, {
+    NotificationKind kind = NotificationKind.info,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    final messenger = appMessengerKey.currentState;
+    if (messenger == null) return; // no screen to show it on (for example in a test)
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: duration,
+          backgroundColor: _background(kind),
+          content: Row(
+            children: [
+              Icon(_icon(kind), color: KopraPalette.paper, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: KopraPalette.paper,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+  }
+
+  static void success(String message) =>
+      show(message, kind: NotificationKind.success);
+
+  static void info(String message) =>
+      show(message, kind: NotificationKind.info);
+
+  static void warning(String message) => show(
+        message,
+        kind: NotificationKind.warning,
+        duration: const Duration(seconds: 5),
+      );
+
+  static void error(String message) =>
+      show(message, kind: NotificationKind.error);
+
+  static Color _background(NotificationKind kind) => switch (kind) {
+    NotificationKind.success => KopraPalette.leaf,
+    NotificationKind.info => KopraPalette.ink,
+    NotificationKind.warning => KopraPalette.amber,
+    NotificationKind.error => KopraPalette.danger,
+  };
+
+  static IconData _icon(NotificationKind kind) => switch (kind) {
+    NotificationKind.success => Icons.check_circle_outline,
+    NotificationKind.info => Icons.info_outline,
+    NotificationKind.warning => Icons.warning_amber_rounded,
+    NotificationKind.error => Icons.error_outline,
+  };
+}
+
 class GradeBadge extends StatelessWidget {
   const GradeBadge(this.grade, {super.key, this.large = false});
   final String grade;

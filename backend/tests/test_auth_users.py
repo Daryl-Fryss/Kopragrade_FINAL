@@ -13,6 +13,40 @@ def test_health(client):
     assert "model_loaded" in res.json()
 
 
+def test_opening_the_server_gives_a_page_and_not_a_404(client):
+    """The addresses a browser or a health check asks for first must not answer 404."""
+    home = client.get("/")
+    assert home.status_code == 200
+    assert "KopraGrade API is running" in home.text
+
+    icon = client.get("/favicon.ico")  # the browser asks for this on every page
+    assert icon.status_code == 200
+    assert icon.headers["content-type"].startswith("image/")
+
+    index = client.get("/api")
+    assert index.status_code == 200
+    assert client.get("/api/").status_code == 200
+    assert any(e["path"] == "/api/auth/login" for e in index.json()["endpoints"])
+
+    assert client.get("/health").status_code == 200
+    assert client.get("/healthz").status_code == 200
+
+
+def test_model_probe_gets_an_empty_list_instead_of_a_404(client):
+    """Editors and local tools probe port 8000 the OpenAI way; we are not an LLM server."""
+    res = client.get("/v1/models")
+    assert res.status_code == 200
+    assert res.json() == {"object": "list", "data": []}
+
+
+def test_failed_requests_are_written_to_the_error_log(client):
+    from app.errors import ERROR_LOG
+
+    client.get("/api/this-route-does-not-exist")
+    lines = ERROR_LOG.read_text(encoding="utf-8").strip().splitlines()
+    assert any("GET /api/this-route-does-not-exist" in line and "\t404\t" in line for line in lines)
+
+
 def test_database_has_exactly_the_five_tables_and_no_recommendations(db):
     rows = db("SELECT table_name FROM information_schema.tables WHERE table_schema = 'kopragrade'")
     assert {r["table_name"] for r in rows} == {

@@ -43,6 +43,8 @@ def client(tmp_path_factory):
     os.environ["DATABASE_URL"] = url
     os.environ["JWT_SECRET"] = "test-secret-" + "x" * 40
     os.environ["IMAGES_DIR"] = str(images_dir)
+    # failed-request log of the test run stays out of the real logs/ folder
+    os.environ["ERROR_LOG_PATH"] = str(tmp_path_factory.mktemp("logs") / "errors.log")
     os.environ["MAX_UPLOAD_MB"] = "1"
     os.environ["APP_TIMEZONE"] = "Asia/Manila"
     os.environ["LOW_CONFIDENCE_THRESHOLD"] = "70"

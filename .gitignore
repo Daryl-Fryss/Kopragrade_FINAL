@@ -12,6 +12,9 @@ venv/
 uploaded_images/*
 !uploaded_images/.gitkeep
 
+# Request/error log written by the API
+logs/
+
 # Training data and the trained model (large files)
 training/dataset/
 backend/model/*.keras

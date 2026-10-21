@@ -158,6 +158,16 @@ ThemeData buildTheme() {
       ),
     ),
     dividerTheme: const DividerThemeData(color: KopraPalette.line, space: 24),
+    snackBarTheme: const SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: KopraPalette.ink,
+      contentTextStyle: TextStyle(
+        color: KopraPalette.paper,
+        fontSize: 14,
+        height: 1.35,
+      ),
+      shape: shape,
+    ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(
       color: KopraPalette.leaf,
       linearTrackColor: KopraPalette.leafTint,

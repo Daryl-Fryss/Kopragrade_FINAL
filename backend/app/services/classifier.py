@@ -46,7 +46,12 @@ class CopraClassifier:
             logger.warning(self.error)
             return
         try:
-            os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # quieter TensorFlow
+            # Quiet TensorFlow before it is imported (both lines must run first):
+            #  - no C++ start-up chatter in the terminal, real errors are still shown
+            #  - oneDNN prints a message so early that absl prints a warning with it,
+            #    so it is turned off by default (set TF_ENABLE_ONEDNN_OPTS=1 in .env to get it back)
+            os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+            os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
             import tensorflow as tf  # imported here because it takes a few seconds
 
             names = json.loads(self.class_names_path.read_text(encoding="utf-8"))

@@ -4,6 +4,7 @@ import 'core/theme.dart';
 import 'providers/providers.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
+import 'widgets/common.dart';
 
 void main() {
   runApp(const ProviderScope(child: KopraGradeApp()));
@@ -37,6 +38,9 @@ class KopraGradeApp extends ConsumerWidget {
       title: 'KopraGrade',
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
+      // One messenger for the whole app: notifications survive a screen change
+      // (used for example right after a new account was created).
+      scaffoldMessengerKey: appMessengerKey,
       theme: buildTheme(),
       home: home,
     );

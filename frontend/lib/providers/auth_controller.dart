@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/api_client.dart';
 import '../models/app_user.dart';
 import '../services/auth_service.dart';
+import '../widgets/common.dart';
 
 class AuthState {
   final AppUser? user;
@@ -12,7 +13,7 @@ class AuthState {
 
 class AuthController extends StateNotifier<AuthState> {
   AuthController(this._api, this._service) : super(const AuthState(initializing: true)) {
-    _api.onUnauthorized = logout;
+    _api.onUnauthorized = _sessionExpired;
     _restore();
   }
 
@@ -39,6 +40,13 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// The server refused the token (it expired or was revoked): sign out and say why,
+  /// so the user gets a warning notification instead of a silent jump back to sign in.
+  Future<void> _sessionExpired() async {
+    await logout();
+    AppNotification.warning('Your session has expired. Please sign in again.');
+  }
+
   Future<void> login(String email, String password) async {
     final result = await _service.login(email, password);
     _api.token = result.token;
@@ -47,6 +55,9 @@ class AuthController extends StateNotifier<AuthState> {
     state = AuthState(user: result.user);
   }
 
+  /// Creates the account only. The user is NOT signed in automatically: after a
+  /// successful sign-up the app goes back to the sign-in screen, shows the
+  /// "You are registered" notification and the user logs in with the new account.
   Future<void> register({
     required String name,
     required String email,
@@ -54,7 +65,6 @@ class AuthController extends StateNotifier<AuthState> {
     required String role,
   }) async {
     await _service.register(name: name, email: email, password: password, role: role);
-    await login(email, password);
   }
 
   Future<void> updateProfile({required String name, String? contact}) async {
