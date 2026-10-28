@@ -73,7 +73,7 @@ app.include_router(history.router)
 @app.get("/api/health", tags=["health"])
 async def health(request: Request):
     classifier: CopraClassifier = request.app.state.classifier
-    return {"status": "ok", "model_loaded": classifier.loaded, "model_problem": classifier.error}
+    return {"status": "ok"}
 
 
 @app.get("/health", include_in_schema=False)

@@ -1,0 +1,33 @@
+[1mdiff --git a/activity10_endpoint_log.md b/activity10_endpoint_log.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7bf16c7[m
+[1m--- /dev/null[m
+[1m+++ b/activity10_endpoint_log.md[m
+[36m@@ -0,0 +1,27 @@[m
+[32m+[m[32m# Activity 10 - Endpoint test log (KopraGrade)[m
+[32m+[m
+[32m+[m[32mRun: `uvicorn app.main:app --host 127.0.0.1 --port 8000` from `backend/`; tested in Swagger UI (/docs).[m
+[32m+[m
+[32m+[m[32m| ID | Method | Path | HTTP |[m
+[32m+[m[32m|---|---|---|---|[m
+[32m+[m[32m| F01 | POST | /api/auth/register | 201 |[m
+[32m+[m[32m| F02 | POST | /api/auth/register | 201 |[m
+[32m+[m[32m| F03 | POST | /api/auth/login | 200 |[m
+[32m+[m[32m| F04 | GET | /api/users/me | 200 |[m
+[32m+[m[32m| F05 | PUT | /api/users/me | 200 |[m
+[32m+[m[32m| F06 | GET | /api/users/me | 200 |[m
+[32m+[m[32m| F07 | POST | /api/classification/predict | 201 |[m
+[32m+[m[32m| F08 | GET | /api/gradings/1 | 200 |[m
+[32m+[m[32m| F09 | GET | /api/history | 200 |[m
+[32m+[m[32m| F10 | GET | /api/history?grade=Well-Dried&limit=5 | 200 |[m
+[32m+[m[32m| F11 | GET | /api/health | 200 |[m
+[32m+[m[32m| F12 | GET | /api/history (buyer) | 200 |[m
+[32m+[m[32m| F13 | GET | /api/gradings/1 (buyer) | 200 |[m
+[32m+[m[32m| N01 | POST | /api/auth/register (duplicate) | 409 |[m
+[32m+[m[32m| N02 | POST | /api/auth/login (bad password) | 401 |[m
+[32m+[m[32m| N03 | GET | /api/users/me (no token) | 401 |[m
+[32m+[m[32m| N04 | GET | /api/gradings/999999 | 404 |[m
+[32m+[m[32m| N05 | POST | /api/classification/predict (buyer) | 403 |[m
+[32m+[m[32m| N06 | GET | /api/gradings/1 (other farmer) | 403 |[m
+[32m+[m
+[32m+[m[32mGET /health -> 200 {"status":"ok"} (E01 fixed). pytest: 40 passed.[m
